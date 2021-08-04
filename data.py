@@ -52,6 +52,33 @@ class VCDBPairDataset(Dataset):
         return a, p, n, len_a, len_p, len_n
 
 
+class FeatureDataset(torch.utils.data.Dataset):
+    def __init__(self,
+                 vid2features,
+                 videos,
+                 padding_size=100,
+                 random_sampling=False):
+        super(FeatureDataset, self).__init__()
+        self.vid2features = vid2features
+        self.padding_size = padding_size
+        self.random_sampling = random_sampling
+        self.videos = videos
+        self.keys = self.vid2features.keys()
+
+    def __len__(self):
+        return len(self.videos)
+
+    def __getitem__(self, index):
+        if self.videos[index] in self.keys:
+            feat = self.vid2features[self.videos[index]][:]
+            len_feat = len(feat)
+            return resize_axis(feat, axis=0, 
+                               new_size=self.padding_size, fill_value=0, 
+                               random_sampling=self.random_sampling).transpose(-1, -2), len_feat, self.videos[index]
+        else:
+            return torch.Tensor([]), 0, 'None'
+
+
 class CC_WEB_VIDEO(object):
 
     def __init__(self):
